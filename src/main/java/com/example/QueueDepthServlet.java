@@ -23,7 +23,7 @@ public class QueueDepthServlet extends javax.servlet.http.HttpServlet {
         }
 
         try {
-            // Load JNDI using .bindings file
+            // Load JNDI environment (.bindings)
             Hashtable<String, Object> env = new Hashtable<>();
             env.put(Context.INITIAL_CONTEXT_FACTORY,
                     "com.sun.jndi.fscontext.RefFSContextFactory");
@@ -32,21 +32,21 @@ public class QueueDepthServlet extends javax.servlet.http.HttpServlet {
 
             Context ctx = new InitialContext(env);
 
-            // LOOKUP EXACT JNDI NAMES YOU CREATED
+            // Lookup QCF and Queue using EXACT names in .bindings
             QueueConnectionFactory qcf =
                     (QueueConnectionFactory) ctx.lookup("MyQCF");
 
             Queue queue =
-                    (Queue) ctx.lookup("TESTING.QUEUE");   // <-- important
+                    (Queue) ctx.lookup("TestQueue");   // <-- IMPORTANT
 
-            // Connect
+            // Create connection (no username/password)
             QueueConnection conn = qcf.createQueueConnection();
             conn.start();
 
             QueueSession session =
                     conn.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
 
-            // Browse queue depth
+            // Browse queue to count messages
             QueueBrowser browser = session.createBrowser(queue);
             Enumeration<?> msgs = browser.getEnumeration();
 
