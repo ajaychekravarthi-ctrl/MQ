@@ -7,7 +7,7 @@ import com.ibm.msg.client.wmq.common.CommonConstants;
 import javax.jms.*;
 import java.util.Enumeration;
 
-public class MQQueueDepth {
+public class QueueDepthServlet {
 
     public static void main(String[] args) {
 
