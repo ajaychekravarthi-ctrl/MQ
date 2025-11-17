@@ -28,7 +28,7 @@ public class QueueDepthServlet extends javax.servlet.http.HttpServlet {
             env.put(Context.INITIAL_CONTEXT_FACTORY,
                     "com.sun.jndi.fscontext.RefFSContextFactory");
             env.put(Context.PROVIDER_URL,
-                    "file:/home/adminuser/mqjndi");
+                    "file:///home/adminuser/mqjndi");
 
             Context ctx = new InitialContext(env);
 
