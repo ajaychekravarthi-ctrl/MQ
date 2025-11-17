@@ -15,23 +15,24 @@ import java.util.Enumeration;
 public class QueueDepthServlet extends HttpServlet {
 
     static {
-        // CCDT path
+        // Set CCDT file environment
         System.setProperty("MQCHLLIB", "/home/adminuser/MQbinding");
         System.setProperty("MQCHLTAB", "AMQCLCHL.TAB");
 
-        // Debug
+        // Log CCDT path
         System.out.println(">>> CCDT File: "
                 + System.getProperty("MQCHLLIB") + "/"
                 + System.getProperty("MQCHLTAB"));
 
-        // MQ Trace for debugging (required to validate CCDT)
+        // MQ Trace (to confirm CCDT loading)
         System.setProperty("com.ibm.msg.client.commonservices.trace.status", "ON");
         System.setProperty("com.ibm.msg.client.commonservices.trace.level", "10");
         System.setProperty("com.ibm.msg.client.commonservices.files.name", "/home/adminuser/mqtrace");
 
-        // Check CCDT file exists
-        File ccdt = new File("/home/adminuser/MQbinding/AMQCLCHL.TAB");
-        System.out.println(">>> CCDT exists: " + ccdt.exists() + " size=" + ccdt.length());
+        // Validate CCDT file presence
+        File ccdtFile = new File("/home/adminuser/MQbinding/AMQCLCHL.TAB");
+        System.out.println(">>> CCDT exists: " + ccdtFile.exists()
+                + " size=" + ccdtFile.length());
     }
 
     @Override
@@ -49,28 +50,35 @@ public class QueueDepthServlet extends HttpServlet {
         QueueConnection conn = null;
 
         try {
+            // Create MQ Connection Factory
             MQQueueConnectionFactory qcf = new MQQueueConnectionFactory();
 
-            // Client mode
+            // Use Client Mode
             qcf.setIntProperty(CommonConstants.WMQ_CONNECTION_MODE,
                     CommonConstants.WMQ_CM_CLIENT);
 
-            // Force CCDT loading
+            // Force CCDT usage
             qcf.setStringProperty(CommonConstants.WMQ_CCDTURL,
                     "file:/home/adminuser/MQbinding/AMQCLCHL.TAB");
 
-            // Disable reconnect to avoid MQRC 2278 delays
-            qcf.setBooleanProperty(CommonConstants.WMQ_CLIENT_RECONNECT_OPTIONS,
-                    CommonConstants.WMQ_CLIENT_RECONNECT_DISABLED);
+            // Disable reconnect behavior (avoid 2278 delays)
+            qcf.setIntProperty(
+                    CommonConstants.WMQ_CLIENT_RECONNECT_OPTIONS,
+                    CommonConstants.WMQ_CLIENT_RECONNECT_DISABLED
+            );
 
+            // Target queue
             MQQueue queue = new MQQueue("TESTING.QUEUE");
 
+            // Create connection
             conn = qcf.createQueueConnection();
             conn.start();
 
+            // Create session
             QueueSession session = conn.createQueueSession(false,
                     Session.AUTO_ACKNOWLEDGE);
 
+            // Browse queue depth
             QueueBrowser browser = session.createBrowser(queue);
 
             int depth = 0;
@@ -81,12 +89,14 @@ public class QueueDepthServlet extends HttpServlet {
                 depth++;
             }
 
+            // Output depth
             out.println("Queue Depth = " + depth);
 
         } catch (Exception e) {
             e.printStackTrace();
             out.println("ERROR: " + e.getMessage());
         } finally {
+            // Cleanup
             if (conn != null) {
                 try { conn.close(); } catch (Exception ignore) {}
             }
