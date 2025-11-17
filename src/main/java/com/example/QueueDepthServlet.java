@@ -10,7 +10,7 @@ public class QueueDepthServlet extends HttpServlet {
 
     static {
         // Load CCDT file
-        System.setProperty("MQCHLLIB", "/opt/ccdt");
+        System.setProperty("MQCHLLIB", "/home/adminuser/MQbinding");
         System.setProperty("MQCHLTAB", "AMQCLCHL.TAB");
         System.out.println("CCDT Loaded Successfully");
     }
