@@ -13,7 +13,7 @@ public class QueueDepthServlet {
 
         try {
             // 1️⃣ Load CCDT file
-            System.setProperty("MQCHLLIB", "/opt/ccdt");          // Directory containing TAB file
+            System.setProperty("MQCHLLIB", "/home/adminuser/MQbinding");          // Directory containing TAB file
             System.setProperty("MQCHLTAB", "AMQCLCHL.TAB");       // TAB file name
 
             System.out.println("Using CCDT: " +
