@@ -28,7 +28,7 @@ public class QueueDepthServlet extends HttpServlet {
                     CommonConstants.WMQ_CM_CLIENT);
 
             // Queue name (MQ real queue name)
-            Queue queue = new MQQueue("REQUEST.QUEUE");
+            Queue queue = new MQQueue("TESTING.QUEUE");
 
             QueueConnection conn = qcf.createQueueConnection();
             QueueSession session = conn.createQueueSession(false,
