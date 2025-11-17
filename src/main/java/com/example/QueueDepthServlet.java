@@ -1,42 +1,17 @@
 package com.example;
 
-import com.ibm.mq.jms.MQQueueConnectionFactory;
-import com.ibm.mq.jms.MQQueue;
-import com.ibm.msg.client.wmq.common.CommonConstants;
-
 import javax.jms.*;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.File;
+import javax.naming.Context;
+import javax.naming.InitialContext;
 import java.io.PrintWriter;
 import java.util.Enumeration;
+import java.util.Hashtable;
 
-public class QueueDepthServlet extends HttpServlet {
-
-    static {
-        // Set CCDT file environment
-        System.setProperty("MQCHLLIB", "/home/adminuser/MQbinding");
-        System.setProperty("MQCHLTAB", "AMQCLCHL.TAB");
-
-        // Log CCDT path
-        System.out.println(">>> CCDT File: "
-                + System.getProperty("MQCHLLIB") + "/"
-                + System.getProperty("MQCHLTAB"));
-
-        // MQ Trace (to confirm CCDT loading)
-        System.setProperty("com.ibm.msg.client.commonservices.trace.status", "ON");
-        System.setProperty("com.ibm.msg.client.commonservices.trace.level", "10");
-        System.setProperty("com.ibm.msg.client.commonservices.files.name", "/home/adminuser/mqtrace");
-
-        // Validate CCDT file presence
-        File ccdtFile = new File("/home/adminuser/MQbinding/AMQCLCHL.TAB");
-        System.out.println(">>> CCDT exists: " + ccdtFile.exists()
-                + " size=" + ccdtFile.length());
-    }
+public class QueueDepthServlet extends javax.servlet.http.HttpServlet {
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
+    protected void doGet(javax.servlet.http.HttpServletRequest req,
+                         javax.servlet.http.HttpServletResponse resp) {
 
         resp.setContentType("text/plain");
 
@@ -50,56 +25,47 @@ public class QueueDepthServlet extends HttpServlet {
         QueueConnection conn = null;
 
         try {
-            // Create MQ Connection Factory
-            MQQueueConnectionFactory qcf = new MQQueueConnectionFactory();
+            // Load JNDI context using .bindings
+            Hashtable<String, Object> env = new Hashtable<>();
+            env.put(Context.INITIAL_CONTEXT_FACTORY,
+                    "com.sun.jndi.fscontext.RefFSContextFactory");
+            env.put(Context.PROVIDER_URL,
+                    "file:/home/adminuser/mqjndi");
 
-            // Use Client Mode
-            qcf.setIntProperty(CommonConstants.WMQ_CONNECTION_MODE,
-                    CommonConstants.WMQ_CM_CLIENT);
+            Context ctx = new InitialContext(env);
 
-            // Force CCDT usage
-            qcf.setStringProperty(CommonConstants.WMQ_CCDTURL,
-                    "file:///home/adminuser/MQbinding/AMQCLCHL.TAB");
+            // Lookup QCF & Queue from bindings
+            QueueConnectionFactory qcf =
+                    (QueueConnectionFactory) ctx.lookup("MyQCF");
 
-            // Disable reconnect behavior (avoid 2278 delays)
-            qcf.setIntProperty(
-                    CommonConstants.WMQ_CLIENT_RECONNECT_OPTIONS,
-                    CommonConstants.WMQ_CLIENT_RECONNECT_DISABLED
-            );
-
-            // Target queue
-            MQQueue queue = new MQQueue("TESTING.QUEUE");
+            Queue queue = (Queue) ctx.lookup("MyQueue");
 
             // Create connection
             conn = qcf.createQueueConnection();
             conn.start();
 
-            // Create session
             QueueSession session = conn.createQueueSession(false,
                     Session.AUTO_ACKNOWLEDGE);
 
-            // Browse queue depth
+            // Browse messages
             QueueBrowser browser = session.createBrowser(queue);
-
-            int depth = 0;
             Enumeration<?> msgs = browser.getEnumeration();
 
+            int depth = 0;
             while (msgs.hasMoreElements()) {
                 msgs.nextElement();
                 depth++;
             }
 
-            // Output depth
             out.println("Queue Depth = " + depth);
+
+            browser.close();
+            session.close();
+            conn.close();
 
         } catch (Exception e) {
             e.printStackTrace();
             out.println("ERROR: " + e.getMessage());
-        } finally {
-            // Cleanup
-            if (conn != null) {
-                try { conn.close(); } catch (Exception ignore) {}
-            }
         }
     }
 }
