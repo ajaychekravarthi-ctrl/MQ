@@ -1,18 +1,18 @@
 package com.example;
 
+import com.ibm.mq.jms.MQQueueConnectionFactory;
+import com.ibm.mq.jms.MQQueue;
+import com.ibm.msg.client.wmq.common.CommonConstants;
+
 import javax.jms.*;
-import javax.naming.InitialContext;
-import javax.servlet.*;
 import javax.servlet.http.*;
 import java.io.PrintWriter;
 
 public class QueueDepthServlet extends HttpServlet {
 
     static {
-        // Load CCDT file
         System.setProperty("MQCHLLIB", "/home/adminuser/MQbinding");
         System.setProperty("MQCHLTAB", "AMQCLCHL.TAB");
-        System.out.println("CCDT Loaded Successfully");
     }
 
     @Override
@@ -22,31 +22,28 @@ public class QueueDepthServlet extends HttpServlet {
         try {
             PrintWriter out = resp.getWriter();
 
-            // Load JNDI context (from bindings)
-            InitialContext ctx = new InitialContext();
+            // Build QCF that depends on CCDT
+            MQQueueConnectionFactory qcf = new MQQueueConnectionFactory();
+            qcf.setIntProperty(CommonConstants.WMQ_CONNECTION_MODE,
+                    CommonConstants.WMQ_CM_CLIENT);
 
-            QueueConnectionFactory qcf =
-                    (QueueConnectionFactory) ctx.lookup("MYQCF");
-
-            Queue queue =
-                    (Queue) ctx.lookup("TESTING.QUEUE");
+            // Queue name (MQ real queue name)
+            Queue queue = new MQQueue("REQUEST.QUEUE");
 
             QueueConnection conn = qcf.createQueueConnection();
-            QueueSession session =
-                    conn.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
+            QueueSession session = conn.createQueueSession(false,
+                    Session.AUTO_ACKNOWLEDGE);
 
-            // Use QueueBrowser to check depth
             QueueBrowser browser = session.createBrowser(queue);
-            int depth = 0;
 
-            java.util.Enumeration<?> msgs = browser.getEnumeration();
-            while (msgs.hasMoreElements()) {
-                msgs.nextElement();
+            int depth = 0;
+            java.util.Enumeration<?> messages = browser.getEnumeration();
+            while (messages.hasMoreElements()) {
+                messages.nextElement();
                 depth++;
             }
 
             conn.close();
-
             out.println("Queue Depth: " + depth);
 
         } catch (Exception e) {
