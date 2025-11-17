@@ -59,7 +59,7 @@ public class QueueDepthServlet extends HttpServlet {
 
             // Force CCDT usage
             qcf.setStringProperty(CommonConstants.WMQ_CCDTURL,
-                    "file:/home/adminuser/MQbinding/AMQCLCHL.TAB");
+                    "file:///home/adminuser/MQbinding/AMQCLCHL.TAB");
 
             // Disable reconnect behavior (avoid 2278 delays)
             qcf.setIntProperty(
