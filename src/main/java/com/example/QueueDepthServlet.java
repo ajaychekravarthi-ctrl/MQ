@@ -22,10 +22,8 @@ public class QueueDepthServlet extends javax.servlet.http.HttpServlet {
             throw new RuntimeException(e);
         }
 
-        QueueConnection conn = null;
-
         try {
-            // Load JNDI context using .bindings
+            // Load JNDI using .bindings file
             Hashtable<String, Object> env = new Hashtable<>();
             env.put(Context.INITIAL_CONTEXT_FACTORY,
                     "com.sun.jndi.fscontext.RefFSContextFactory");
@@ -34,20 +32,21 @@ public class QueueDepthServlet extends javax.servlet.http.HttpServlet {
 
             Context ctx = new InitialContext(env);
 
-            // Lookup QCF & Queue from bindings
+            // LOOKUP EXACT JNDI NAMES YOU CREATED
             QueueConnectionFactory qcf =
                     (QueueConnectionFactory) ctx.lookup("MyQCF");
 
-            Queue queue = (Queue) ctx.lookup("MyQueue");
+            Queue queue =
+                    (Queue) ctx.lookup("TESTING.QUEUE");   // <-- important
 
-            // Create connection
-            conn = qcf.createQueueConnection();
+            // Connect
+            QueueConnection conn = qcf.createQueueConnection();
             conn.start();
 
-            QueueSession session = conn.createQueueSession(false,
-                    Session.AUTO_ACKNOWLEDGE);
+            QueueSession session =
+                    conn.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
 
-            // Browse messages
+            // Browse queue depth
             QueueBrowser browser = session.createBrowser(queue);
             Enumeration<?> msgs = browser.getEnumeration();
 
@@ -64,8 +63,7 @@ public class QueueDepthServlet extends javax.servlet.http.HttpServlet {
             conn.close();
 
         } catch (Exception e) {
-            e.printStackTrace();
-            out.println("ERROR: " + e.getMessage());
+            e.printStackTrace(out);
         }
     }
 }
