@@ -56,7 +56,7 @@ public class QueueDepthServlet extends javax.servlet.http.HttpServlet {
                 depth++;
             }
 
-            out.println("Queue Depth for Testing = " + depth);
+            out.println("Queue Depth = " + depth);
 
             browser.close();
             session.close();
